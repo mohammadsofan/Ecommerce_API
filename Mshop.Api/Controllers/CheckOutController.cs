@@ -1,13 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Stripe.Checkout;
-using Stripe;
+﻿using Microsoft.AspNetCore.Mvc;
 using Mshop.Api.DTOs.Requests;
-using System.Net.Sockets;
 using Mshop.Api.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Mshop.Api.Utilities;
+using Stripe;
 
 namespace Mshop.Api.Controllers
 {
@@ -16,65 +13,70 @@ namespace Mshop.Api.Controllers
     [Authorize]
     public class CheckOutController : ControllerBase
     {
-        private readonly ICartService cartService;
+        private readonly ICheckOutService _checkOutService;
 
-        public CheckOutController(ICartService cartService)
+        public CheckOutController(ICheckOutService checkOutService)
         {
-            this.cartService = cartService;
+            this._checkOutService = checkOutService;
         }
 
         [HttpPost("CreateCheckoutSession")]
-        public async Task<IActionResult> CreateCheckoutSession([FromBody] CheckOutRequest model)
+        public async Task<IActionResult> CreateCheckoutSession([FromBody] CheckOutRequest checkOutRequest,CancellationToken cancellationToken = default)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-            var result = Guid.TryParse(userId, out var id);
-            if(!result)
+            try
             {
-                return Unauthorized();
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+                if (userId is null)
+                {
+                    return Unauthorized();
+                }
+                var checkOutResult = await _checkOutService.CreateCheckoutSession(userId, checkOutRequest, cancellationToken);
+
+                if(checkOutResult is null) {
+                    return BadRequest(new { message = "User's cart is empty" });
+                }
+                if (checkOutRequest.PaymentMethod == Data.models.PaymentMethod.Cash)
+                {
+                    return RedirectToAction(nameof(Success), new { OrderId = checkOutResult.orderId });
+                }
+                else
+                {
+                    return Ok(new { checkOutResult.Message, PaymentMethod = "Visa", checkOutResult.TotalAmount,OrderId = checkOutResult.orderId, SessionId=checkOutResult.Session!.Id, checkOutResult.Session.Url });
+                }
             }
-            var cart = await cartService.GetAsync(c => c.ApplicationUserId == id, false, includes: c => c.Product);
-            var options = new SessionCreateOptions
+            catch (Exception ex)
             {
-                PaymentMethodTypes = new List<string> { "card" },
-                LineItems = new List<SessionLineItemOptions>(),
-                Mode = "payment",
-                SuccessUrl = Url.Action(nameof(Success),"CheckOut",null,protocol:Request.Scheme,host:Request.Host.Value),
-                CancelUrl = Url.Action(nameof(Cancel), "CheckOut", null, protocol: Request.Scheme, host: Request.Host.Value),
-            };
-            foreach (var item in cart)
-            {
-                options.LineItems.Add(
-                    new SessionLineItemOptions
-                    {
-                        PriceData = new SessionLineItemPriceDataOptions
-                        {
-                            Currency = model.Currency,
-                            ProductData = new SessionLineItemPriceDataProductDataOptions
-                            {
-                                Name =item.Product.Name,
-                                Description = item.Product.Description,
-                            },
-                            UnitAmount =(long) (item.Product.Price - (item.Product.Price*item.Product.Discount))*100,
-                        },
-                        Quantity = item.Quantity,
-                    }
-                 );
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                        new { message = "Payment failed", error = ex.Message });
             }
-            var service = new SessionService();
-            var session = service.Create(options);
-            return Ok(new { sessionId = session.Id, url = session.Url });
         }
-        [HttpGet("success")]
+        [HttpGet("success/{orderId}")]
         [AllowAnonymous]
-        public IActionResult Success()
+        public async Task<IActionResult> Success([FromRoute] Guid orderId)
         {
-            return Ok(new {message="payment done successfully!"});
+            try
+            {
+                await _checkOutService.OnSuccess(orderId);
+                return Ok(new { message = "payment done successfully!"});
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
-        [HttpGet("cancel")]
+        [HttpGet("cancel/{orderId}")]
         [AllowAnonymous]
-        public IActionResult Cancel()
+        public async Task<IActionResult> Cancel([FromRoute] Guid orderId)
         {
-            return Ok(new {message="payment proccess canceled!"});
+            try
+            {
+                await _checkOutService.OnCancel(orderId);
+                return Ok(new { message = "payment proccess cancelled!" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
         [HttpPost("refund")]
         [Authorize(Roles =$"{ApplicationRoles.SuperAdmin}")]
@@ -82,13 +84,8 @@ namespace Mshop.Api.Controllers
         {
             try
             {
-                var refundOptions = new RefundCreateOptions
-                {
-                    PaymentIntent = request.PaymentId,
-                };
 
-                var refundService = new RefundService();
-                var refund = await refundService.CreateAsync(refundOptions);
+                var refund = await _checkOutService.RefundPayment(request.PaymentId);
 
                 if (refund.Status == "succeeded")
                 {

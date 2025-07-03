@@ -25,20 +25,20 @@ namespace Mshop.Api.Controllers
             this.cartService = cartService;
             this.userManager = userManager;
         }
-        public Guid? GetCurrentUserId()
+        public string? GetCurrentUserId()
         {
             var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.TryParse(id, out var userId) ? userId : null;
+            return id;
         }
         [HttpGet("")]
         public async Task<IActionResult> GetCartItems()
         {
             try
             {
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
                 var cart = await cartService.GetAsync(c => c.ApplicationUserId == userId, false,c=>c.Product);
-                var totalAmount = cart.Sum(c => (c.Product.Price - (c.Product.Price * c.Product.Discount)) * c.Quantity);
+                var totalAmount = cart.Sum(c =>Math.Round((c.Product.Price - (c.Product.Price * c.Product.Discount)) * c.Quantity));
                 return Ok(new { CartItems=cart.Adapt<IEnumerable<CartResponse>>(),TotalPrice=totalAmount });
                 
             }
@@ -52,7 +52,7 @@ namespace Mshop.Api.Controllers
         {
             try
             {
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
 
                 var cart = await cartService.GetOneAsync(c => c.ApplicationUserId == userId&&c.ProductId==id, false, c => c.Product);
@@ -70,7 +70,7 @@ namespace Mshop.Api.Controllers
         {
             try
             {
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
                 var result = await cartService.DeleteAsync(userId,id, cancellationToken);
                 if(!result) return NotFound();
@@ -88,7 +88,7 @@ namespace Mshop.Api.Controllers
         {
             try
             {
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
 
                 var exisitingCart = await cartService.GetOneAsync(c=>c.ProductId==cartRequest.ProductId && c.ApplicationUserId == userId);
@@ -118,7 +118,7 @@ namespace Mshop.Api.Controllers
             try
             {
 
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
 
                 var result = await cartService.EditQuantityAsync(userId, id, quantityRequest.Quantity, cancellationToken);
@@ -136,9 +136,9 @@ namespace Mshop.Api.Controllers
         public async Task<IActionResult> Clear()
         {
             try { 
-                if (GetCurrentUserId() is not Guid userId)
+                if (GetCurrentUserId() is not string userId)
                     return Unauthorized();
-                await cartService.Clear(userId);
+                await cartService.ClearAsync(userId);
                 return NoContent();
             }
 

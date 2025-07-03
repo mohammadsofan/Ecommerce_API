@@ -14,12 +14,12 @@ namespace Mshop.Api.Services
             this._context = context;
         }
 
-        public async Task<bool> CheckExists(Guid productId,Guid userId)
+        public async Task<bool> CheckExists(Guid productId,string userId)
         {
             return await _context.Carts.AnyAsync(c=>c.ProductId == productId&&c.ApplicationUserId==userId); 
         }
 
-        public async Task<bool> Clear(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<bool> ClearAsync(string userId, CancellationToken cancellationToken = default)
         {
             var cartItems = await _context.Carts.Where(c => c.ApplicationUserId == userId).ToListAsync(cancellationToken);
             if(!cartItems.Any())
@@ -29,7 +29,7 @@ namespace Mshop.Api.Services
             return true;
         }
 
-        public async Task<bool> DeleteAsync(Guid userId,Guid productId, CancellationToken cancellationToken = default)
+        public async Task<bool> DeleteAsync(string userId,Guid productId, CancellationToken cancellationToken = default)
         {
             var entity = await _context.Carts.FindAsync(productId, userId);
             if (entity is null)
@@ -39,7 +39,7 @@ namespace Mshop.Api.Services
             return true;
         }
 
-        public async Task<int> EditQuantityAsync(Guid userId, Guid productId,int newQuantity, CancellationToken cancellationToken = default)
+        public async Task<int> EditQuantityAsync(string userId, Guid productId,int newQuantity, CancellationToken cancellationToken = default)
         {
             var entity = await _context.Carts.FindAsync(productId, userId);
             if (entity is null)

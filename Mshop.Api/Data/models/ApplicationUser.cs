@@ -17,6 +17,9 @@ namespace Mshop.Api.Data.models
         public string Address { get; set; } = null!;
         public ApplicationUserGender Gender { get; set; }
         public DateTime BirthDate { get; set; }
+        public IEnumerable<Cart>Carts { get; set; } = null!;
+        public IEnumerable<Order> Orders { get; set; } = null!;
+        public IEnumerable<ResetPasswordCode> ResetCodes { get; set; } = null!;
 
     }
 }

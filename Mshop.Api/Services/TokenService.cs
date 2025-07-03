@@ -20,7 +20,7 @@ namespace Mshop.Api.Services
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YfV8j2joL4NuSomujF20c6F8EqUMKe1r"));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!));
             var cred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var jwtToken = new JwtSecurityToken(
                 claims: claims,
@@ -29,5 +29,6 @@ namespace Mshop.Api.Services
             var token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
             return token;
         }
+
     }
 }

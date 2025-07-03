@@ -18,7 +18,7 @@ namespace Mshop.Api.Data.models
         public Guid CategoryId { get; set; }
         public Brand Brand { get; set; } = null!;
         public Guid? BrandId { get; set; }
-
+        public IEnumerable<OrderItem> OrderItems { get; set; } = null!;
 
 
     }

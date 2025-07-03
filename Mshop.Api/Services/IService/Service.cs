@@ -23,6 +23,13 @@ namespace Mshop.Api.Services.IService
             return entity;
         }
 
+        public async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            await _context.AddRangeAsync(entities, cancellationToken);
+            await _context.SaveChangesAsync();
+            return entities;
+        }
+
         public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var entity = await _dbset.FindAsync(id);

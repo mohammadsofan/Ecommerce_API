@@ -12,8 +12,8 @@ using Mshop.Api.Data;
 namespace Mshop.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250426135037_initial")]
-    partial class initial
+    [Migration("20250701082553_change cart,user relationship int M-M")]
+    partial class changecartuserrelationshipintMM
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -272,10 +272,7 @@ namespace Mshop.Api.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApplicationUserId1")
+                    b.Property<string>("ApplicationUserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid>("Id")
@@ -286,7 +283,7 @@ namespace Mshop.Api.Migrations
 
                     b.HasKey("ProductId", "ApplicationUserId");
 
-                    b.HasIndex("ApplicationUserId1");
+                    b.HasIndex("ApplicationUserId");
 
                     b.ToTable("Carts");
                 });
@@ -311,6 +308,52 @@ namespace Mshop.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("Mshop.Api.Data.models.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Carrier")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("OrderStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SessionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ShippedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrackingNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Product", b =>
@@ -418,8 +461,10 @@ namespace Mshop.Api.Migrations
             modelBuilder.Entity("Mshop.Api.Data.models.Cart", b =>
                 {
                     b.HasOne("Mshop.Api.Data.models.ApplicationUser", "ApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ApplicationUserId1");
+                        .WithMany("Carts")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Mshop.Api.Data.models.Product", "Product")
                         .WithMany()
@@ -430,6 +475,17 @@ namespace Mshop.Api.Migrations
                     b.Navigation("ApplicationUser");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Mshop.Api.Data.models.Order", b =>
+                {
+                    b.HasOne("Mshop.Api.Data.models.ApplicationUser", "ApplicationUser")
+                        .WithMany("Orders")
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Product", b =>
@@ -447,6 +503,13 @@ namespace Mshop.Api.Migrations
                     b.Navigation("Brand");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("Mshop.Api.Data.models.ApplicationUser", b =>
+                {
+                    b.Navigation("Carts");
+
+                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Brand", b =>

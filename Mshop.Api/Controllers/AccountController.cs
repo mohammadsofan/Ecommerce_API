@@ -28,18 +28,21 @@ namespace Mshop.Api.Controllers
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IEmailSender emailSender;
         private readonly ITokenService tokenService;
+        private readonly IResetPasswordCodeService resetPasswordCodeService;
 
         public AccountController(UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser>  signInManager,
             RoleManager<IdentityRole> roleManager
             ,IEmailSender emailSender,
-            ITokenService tokenService)
+            ITokenService tokenService,
+            IResetPasswordCodeService resetPasswordCodeService)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.roleManager = roleManager;
             this.emailSender = emailSender;
             this.tokenService = tokenService;
+            this.resetPasswordCodeService = resetPasswordCodeService;
         }
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
@@ -165,6 +168,166 @@ namespace Mshop.Api.Controllers
             }
 
         }
+        //Reset-Password using Link with GeneratePasswordResetTokenAsync() from Identity
+        /*
+        [HttpGet("ResetPasswordRequest")]
+        public async Task<IActionResult> ResetPasswordRequest([FromQuery] string email)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if(user is null)
+            {
+                return Accepted(new {message="user not found!"});
+            }
+            var token = await userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebUtility.UrlEncode(token);
+            var resetLink = $"https://frontend.com/reset-password?token={encodedToken}&email={email}&userId={user.Id}";
+            await emailSender.SendEmailAsync(email, "Reset Password Link", $@"
+                    <div style=""font-family: Arial, sans-serif; padding: 20px;"">
+                        <h2 style=""color: #333;"">Reset Your Password</h2>
+                        <p>Hello,</p>
+                        <p>We received a request to reset your password. Click the link below to choose a new password:</p>
+                        <p>
+                            <a href=""{resetLink}"" 
+                               style=""display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;"">
+                               Reset Password
+                            </a>
+                        </p>
+                        <p>If you didn’t request a password reset, you can ignore this email.</p>
+                        <p style=""color: #777; font-size: 0.9em;"">This link will expire in 15 minutes.</p>
+                        <hr />
+                        <p style=""font-size: 0.8em; color: #999;"">© {DateTime.UtcNow.Year} MShop. All rights reserved.</p>
+                    </div>
+                ");
+            return Accepted(new {message="Email sended",email});
+        }
+        [HttpPost("ConfirmResetPassword")]
+        public async Task<IActionResult> ConfirmResetPassword([FromBody] ConfirmResetPasswordRequest confirmReset)
+        {
+            try
+            {
+                var user = await userManager.FindByIdAsync(confirmReset.UserId);
+                if(user is null)
+                {
+                    return NotFound(new { message = "user not found." });
+                }
+                var decodedToken = WebUtility.UrlDecode(confirmReset.Token);
+                var result = await userManager.ResetPasswordAsync(user, decodedToken, confirmReset.NewPassword);
+                if (result.Succeeded)
+                {
+                    return NoContent();
+                }
+                else
+                {
+                    return BadRequest(new { 
+                        message = "Password reset failed.",
+                        errors = result.Errors.Select(e => e.Description) 
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new {ex.Message});
+            }
+        }
+        */
 
+        //Reset-Password using code
+        [HttpGet("SendResetPasswordCode")]
+        public async Task<IActionResult> SendResetPasswordCode([FromQuery] string email,CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await userManager.FindByEmailAsync(email);
+                if (user is null)
+                {
+                    return Accepted();
+                }
+                var resetPasswordCode = new ResetPasswordCode()
+                {
+                    ApplicationUserId = user.Id,
+                    Code = new Random().Next(1000, 9999).ToString(),
+                    ExpirationDate = DateTime.UtcNow.AddMinutes(15)
+                };
+                await resetPasswordCodeService.AddAsync(resetPasswordCode,cancellationToken);
+                var htmlMessage = $@"
+                <div style=""font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;"">
+                    <h2 style=""color: #333;"">Reset Your Password</h2>
+                    <p>Hello,</p>
+                    <p>We received a request to reset your password for your account associated with this email: <strong>{email}</strong>.</p>
+                    <p>Please use the verification code below to reset your password:</p>
+                    <div style=""background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; border-radius: 8px; color: #333; margin: 20px 0;"">
+                        {resetPasswordCode.Code}
+                    </div>
+                    <p>This code will expire in <strong>15 minutes</strong>.</p>
+                    <p>If you didn't request this, you can safely ignore this email.</p>
+                    <hr style=""margin: 30px 0;"" />
+                    <p style=""font-size: 0.8em; color: #999;"">© {DateTime.UtcNow.Year} MShop. All rights reserved.</p>
+                </div>";
+
+                await emailSender.SendEmailAsync(email, "Reset Password Verification Code", htmlMessage);
+                return Accepted();
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [HttpPost("ConfirmResetPassword")]
+        public async Task<IActionResult> ConfirmResetPassword([FromBody] ConfirmResetPasswordRequest confirmReset,CancellationToken cancellationToken =default)
+        {
+            try
+            {
+                var user = await userManager.FindByEmailAsync(confirmReset.Email);
+                if (user is null)
+                {
+                    return NotFound();
+                }
+                var resetPasswordCode = await resetPasswordCodeService.GetOneAsync(c => c.Code == confirmReset.Code && c.ApplicationUserId == user.Id);
+                if (resetPasswordCode == null)
+                {
+                    return BadRequest(new { message = "Invalid Code." });
+                }
+                if(resetPasswordCode.IsUsed == true)
+                {
+                    return BadRequest(new { message = "Code Already Used." });
+
+                }
+                if (DateTime.UtcNow > resetPasswordCode.ExpirationDate)
+                {
+                    return BadRequest(new { message = "Code Expired." });
+                }
+                var token = await userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await userManager.ResetPasswordAsync(user, token, confirmReset.NewPassword);
+                if (result.Succeeded)
+                {
+                    resetPasswordCode.IsUsed = true;
+                    await resetPasswordCodeService.EditAsync(resetPasswordCode.Id, resetPasswordCode,cancellationToken);
+                    var htmlMessage = $@"
+                    <div style=""font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto;"">
+                        <h2 style=""color: #28a745;"">Your Password Has Been Reset</h2>
+                        <p>Hello,</p>
+                        <p>This is a confirmation that your password has been successfully reset for your account associated with this email: <strong>{confirmReset.Email}</strong>.</p>
+                        <p>If you made this change, no further action is needed.</p>
+                        <p>If you did not request this change, please contact our support team immediately to secure your account.</p>
+                        <hr style=""margin: 30px 0;"" />
+                        <p style=""font-size: 0.8em; color: #999;"">© {DateTime.UtcNow.Year} MShop. All rights reserved.</p>
+                    </div>";
+                    await emailSender.SendEmailAsync(confirmReset.Email, "Your Password Has Been Reset", htmlMessage);
+
+                    return Ok(new { message = "Password has been reset successfully." });
+                }
+                else
+                {
+                    return BadRequest(new { 
+                        message = "Password reset failed.",
+                        errors = result.Errors.Select(e => e.Description) 
+                    });
+                }
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
     }
 }

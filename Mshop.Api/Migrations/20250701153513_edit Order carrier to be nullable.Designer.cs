@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mshop.Api.Data;
 
@@ -11,9 +12,11 @@ using Mshop.Api.Data;
 namespace Mshop.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250701153513_edit Order carrier to be nullable")]
+    partial class editOrdercarriertobenullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -374,9 +377,6 @@ namespace Mshop.Api.Migrations
                     b.Property<Guid>("ProductId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
@@ -442,33 +442,6 @@ namespace Mshop.Api.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("Mshop.Api.Data.models.ResetPasswordCode", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApplicationUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ExpirationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
-
-                    b.ToTable("ResetPasswordCode");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -588,24 +561,11 @@ namespace Mshop.Api.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Mshop.Api.Data.models.ResetPasswordCode", b =>
-                {
-                    b.HasOne("Mshop.Api.Data.models.ApplicationUser", "ApplicationUser")
-                        .WithMany("ResetCodes")
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("Mshop.Api.Data.models.ApplicationUser", b =>
                 {
                     b.Navigation("Carts");
 
                     b.Navigation("Orders");
-
-                    b.Navigation("ResetCodes");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Brand", b =>

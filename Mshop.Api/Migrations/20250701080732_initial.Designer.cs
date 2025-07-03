@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mshop.Api.Data;
 
@@ -11,9 +12,11 @@ using Mshop.Api.Data;
 namespace Mshop.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250701080732_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -280,7 +283,8 @@ namespace Mshop.Api.Migrations
 
                     b.HasKey("ProductId", "ApplicationUserId");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
 
                     b.ToTable("Carts");
                 });
@@ -318,10 +322,8 @@ namespace Mshop.Api.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Carrier")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("DeliveryFee")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
@@ -332,28 +334,17 @@ namespace Mshop.Api.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
 
-                    b.Property<string>("RecipientName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RecipientPhone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("SessionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ShippedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ShippingAddress")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Subtotal")
+                    b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TrackingNumber")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TransactionId")
@@ -363,34 +354,7 @@ namespace Mshop.Api.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("Mshop.Api.Data.models.OrderItem", b =>
-                {
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("OrderId", "ProductId");
-
-                    b.HasIndex("ProductId");
-
-                    b.ToTable("OrderItems");
+                    b.ToTable("Order");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Product", b =>
@@ -442,33 +406,6 @@ namespace Mshop.Api.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
-                });
-
-            modelBuilder.Entity("Mshop.Api.Data.models.ResetPasswordCode", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApplicationUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ExpirationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId");
-
-                    b.ToTable("ResetPasswordCode");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -525,8 +462,8 @@ namespace Mshop.Api.Migrations
             modelBuilder.Entity("Mshop.Api.Data.models.Cart", b =>
                 {
                     b.HasOne("Mshop.Api.Data.models.ApplicationUser", "ApplicationUser")
-                        .WithMany("Carts")
-                        .HasForeignKey("ApplicationUserId")
+                        .WithOne("Cart")
+                        .HasForeignKey("Mshop.Api.Data.models.Cart", "ApplicationUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -552,25 +489,6 @@ namespace Mshop.Api.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
-            modelBuilder.Entity("Mshop.Api.Data.models.OrderItem", b =>
-                {
-                    b.HasOne("Mshop.Api.Data.models.Order", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Mshop.Api.Data.models.Product", "Product")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
-
-                    b.Navigation("Product");
-                });
-
             modelBuilder.Entity("Mshop.Api.Data.models.Product", b =>
                 {
                     b.HasOne("Mshop.Api.Data.models.Brand", "Brand")
@@ -588,24 +506,12 @@ namespace Mshop.Api.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Mshop.Api.Data.models.ResetPasswordCode", b =>
-                {
-                    b.HasOne("Mshop.Api.Data.models.ApplicationUser", "ApplicationUser")
-                        .WithMany("ResetCodes")
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("Mshop.Api.Data.models.ApplicationUser", b =>
                 {
-                    b.Navigation("Carts");
+                    b.Navigation("Cart")
+                        .IsRequired();
 
                     b.Navigation("Orders");
-
-                    b.Navigation("ResetCodes");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Brand", b =>
@@ -616,16 +522,6 @@ namespace Mshop.Api.Migrations
             modelBuilder.Entity("Mshop.Api.Data.models.Category", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("Mshop.Api.Data.models.Order", b =>
-                {
-                    b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("Mshop.Api.Data.models.Product", b =>
-                {
-                    b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618
         }

@@ -38,10 +38,15 @@ namespace Mshop.Api
             builder.Services.AddScoped<ICartService, CartService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITokenService, Services.TokenService>();
+            builder.Services.AddScoped<ICheckOutService, CheckOutService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<IOrderItemService, OrderItemService>();
+            builder.Services.AddScoped<IResetPasswordCodeService, ResetPasswordCodeService>();
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
                 options.SignIn.RequireConfirmedEmail = true;
+                
             })
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
@@ -53,24 +58,29 @@ namespace Mshop.Api
                                       policy.AllowAnyOrigin();
                                   });
             });
+            builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+            {
+                options.TokenLifespan = TimeSpan.FromMinutes(15);
+            });
+
             builder.Services.AddAuthentication(options=> {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 })
                 .AddJwtBearer(options =>
                 {
-                    
+
                     options.TokenValidationParameters = new()
                     {
                         ValidateIssuer = false,
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YfV8j2joL4NuSomujF20c6F8EqUMKe1r"))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!))
                     };
                 });
             builder.Services.AddAuthorization();
-
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, EmailSender>();
             builder.Services.AddTransient<IDBInitilizer, DBInitilizer>();
             builder.Services.Configure<StripeSettings>(options =>
