@@ -16,8 +16,10 @@ namespace Mshop.Api.Utilities.EmailSender
 
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            var fromEmail = Environment.GetEnvironmentVariable("FROM_EMAIL");
-            var password = Environment.GetEnvironmentVariable("PASSWORD");
+            //var fromEmail = Environment.GetEnvironmentVariable("FROM_EMAIL");
+            var fromEmail = _configuration["EmailSender:FromEmail"];
+            //var password = Environment.GetEnvironmentVariable("PASSWORD");
+            var password = _configuration["EmailSender:Password"];
 
             using SmtpClient smtpClient = new("smtp.gmail.com", 587)
             {

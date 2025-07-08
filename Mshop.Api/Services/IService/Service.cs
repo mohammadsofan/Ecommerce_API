@@ -76,7 +76,6 @@ namespace Mshop.Api.Services.IService
         public async Task<T?> GetOneAsync(Expression<Func<T, bool>> expression, bool isTrackable = true, params Expression<Func<T, object>>[] includes)
         {
             var all=await GetAsync(expression, isTrackable,includes);
-            Console.WriteLine(all);
             return all.FirstOrDefault();
         }
 

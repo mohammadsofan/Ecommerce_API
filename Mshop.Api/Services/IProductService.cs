@@ -11,6 +11,8 @@ namespace Mshop.Api.Services
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> EditAsync(Guid id, Product product, IFormFile? image, CancellationToken cancellationToken = default);
         Task<bool> ToggleStatusAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> IncreaseQuantity(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> DecreaseQuantity(Guid id, CancellationToken cancellationToken = default);
 
     }
 }

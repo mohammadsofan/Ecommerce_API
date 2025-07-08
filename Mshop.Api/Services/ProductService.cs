@@ -147,5 +147,29 @@ namespace Mshop.Api.Services
             await context.SaveChangesAsync(cancellationToken);
             return true;
         }
+
+        public async Task<bool> IncreaseQuantity(Guid id, CancellationToken cancellationToken = default)
+        {
+            var product = await context.Products.FindAsync(id);
+            if (product is null)
+            {
+                return false;
+            }
+            product.Quantity +=1;
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+
+        public async Task<bool> DecreaseQuantity(Guid id, CancellationToken cancellationToken = default)
+        {
+            var product = await context.Products.FindAsync(id);
+            if (product is null)
+            {
+                return false;
+            }
+            product.Quantity -= 1;
+            await context.SaveChangesAsync(cancellationToken);
+            return true;
+        }
     }
 }

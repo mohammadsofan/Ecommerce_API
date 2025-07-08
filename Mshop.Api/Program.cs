@@ -29,8 +29,8 @@ namespace Mshop.Api
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
+                //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-                //options.UseSqlServer(builder.Configuration.GetConnectionString("ProductionConnection"));
             });
             builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<IProductService, Services.ProductService>();
@@ -76,7 +76,8 @@ namespace Mshop.Api
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SecretKey"]!))
+                        //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!))
                     };
                 });
             builder.Services.AddAuthorization();
@@ -85,10 +86,13 @@ namespace Mshop.Api
             builder.Services.AddTransient<IDBInitilizer, DBInitilizer>();
             builder.Services.Configure<StripeSettings>(options =>
             {
-                options.SecretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
-                options.PublishableKey = Environment.GetEnvironmentVariable("STRIPE_PUBLISHABLE_KEY");
+                // options.SecretKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+                // options.PublishableKey = Environment.GetEnvironmentVariable("STRIPE_PUBLISHABLE_KEY");
+                options.SecretKey = builder.Configuration["Stripe:SecretKey"];
+                options.PublishableKey = builder.Configuration["Stripe:PublishableKey"];
             });
-            StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+            //StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
+            StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

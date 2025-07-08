@@ -120,12 +120,53 @@ namespace Mshop.Api.Controllers
         [HttpPatch("toggleStatus/{id}")]
         public async Task<IActionResult> ToggleStatus([FromRoute] Guid id, CancellationToken cancellationToken = default)
         {
-            var result = await productService.ToggleStatusAsync(id, cancellationToken);
-            if (result == false)
+            try
             {
-                return NotFound();
+                var result = await productService.ToggleStatusAsync(id, cancellationToken);
+                if (result == false)
+                {
+                    return NotFound();
+                }
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [HttpPatch("IncreaseQuantity/{id}")]
+        public async Task<IActionResult> IncreaseQuantity([FromRoute] Guid id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await productService.IncreaseQuantity(id, cancellationToken);
+                if (result == false)
+                {
+                    return NotFound();
+                }
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+        [HttpPatch("DecreaseQuantity/{id}")]
+        public async Task<IActionResult> DecreaseQuantity([FromRoute] Guid id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var result = await productService.DecreaseQuantity(id, cancellationToken);
+                if (result == false)
+                {
+                    return NotFound();
+                }
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
     }
 }
