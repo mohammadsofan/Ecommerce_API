@@ -20,6 +20,7 @@ namespace Mshop.Api.Data.models
         public IEnumerable<Cart>Carts { get; set; } = null!;
         public IEnumerable<Order> Orders { get; set; } = null!;
         public IEnumerable<ResetPasswordCode> ResetCodes { get; set; } = null!;
+        public IEnumerable<Review> Reviews { get; set; } = null!;
 
     }
 }

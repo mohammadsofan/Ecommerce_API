@@ -13,6 +13,7 @@ namespace Mshop.Api.DTOs.Responses
         public string MainImage { get; set; } = null!;
         public bool Status { get; set; }
         public double Rate { get; set; }
+        public int ReviewsCount { get; set; }
         public bool IsPublished { get; set; }
         public Guid CategoryId { get; set; }
         public Guid BrandId { get; set; }

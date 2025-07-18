@@ -11,7 +11,6 @@ namespace Mshop.Api.DTOs.Requests
         public int Quantity { get; set; }
         public IFormFile MainImage { get; set; } = null!;
         public bool Status { get; set; }
-        public double Rate { get; set; }
         public bool IsPublished { get; set; }
         public Guid CategoryId { get; set; }
         public Guid? BrandId { get; set; }

@@ -19,7 +19,8 @@ namespace Mshop.Api.Data.models
         public Brand Brand { get; set; } = null!;
         public Guid? BrandId { get; set; }
         public IEnumerable<OrderItem> OrderItems { get; set; } = null!;
-
+        public IEnumerable<Review> Reviews { get; set; } = null!;
+        public int ReviewsCount { get; set; }
 
     }
 }

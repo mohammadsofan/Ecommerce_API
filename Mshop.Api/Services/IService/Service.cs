@@ -32,7 +32,7 @@ namespace Mshop.Api.Services.IService
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var entity = await _dbset.FindAsync(id);
+            var entity = await _dbset.FirstOrDefaultAsync(t=>t.Id == id);
             if (entity is null)
                 return false;
             _dbset.Remove(entity);
@@ -77,6 +77,10 @@ namespace Mshop.Api.Services.IService
         {
             var all=await GetAsync(expression, isTrackable,includes);
             return all.FirstOrDefault();
+        }
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
 
     }

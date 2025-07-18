@@ -21,5 +21,6 @@ namespace Mshop.Api.DTOs.Responses
         public decimal DeliveryFee { get; set; }     // سعر التوصيل
         public decimal TotalAmount => Subtotal + DeliveryFee; // السعر الكلي
         public string ApplicationUserId { get; set; } = null!;
+        public IEnumerable<OrderItemResponse> OrderItems { get; set; } = null!;
     }
 }

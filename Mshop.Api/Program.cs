@@ -42,6 +42,7 @@ namespace Mshop.Api
             builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IOrderItemService, OrderItemService>();
             builder.Services.AddScoped<IResetPasswordCodeService, ResetPasswordCodeService>();
+            builder.Services.AddScoped<IReviewService, Services.ReviewService>();
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;

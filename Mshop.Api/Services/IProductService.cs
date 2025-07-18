@@ -1,4 +1,5 @@
-﻿using Mshop.Api.Data.models;
+﻿using Microsoft.EntityFrameworkCore;
+using Mshop.Api.Data.models;
 using System.Linq.Expressions;
 
 namespace Mshop.Api.Services
@@ -13,6 +14,7 @@ namespace Mshop.Api.Services
         Task<bool> ToggleStatusAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> IncreaseQuantity(Guid id, CancellationToken cancellationToken = default);
         Task<bool> DecreaseQuantity(Guid id, CancellationToken cancellationToken = default);
+        Task SaveChangesAsync();
 
     }
 }

@@ -13,5 +13,7 @@ namespace Mshop.Api.Data
         public DbSet<Cart> Carts { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<ResetPasswordCode> ResetPasswordCodes { get; set; }
+        public DbSet<Review> Reviews { get; set; }
     }
 }

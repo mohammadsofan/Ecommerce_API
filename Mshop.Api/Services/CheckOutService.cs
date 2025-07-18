@@ -151,6 +151,7 @@ namespace Mshop.Api.Services
             {
                 var orderItem = new OrderItem()
                 {
+                    Id= Guid.NewGuid(),
                     OrderId = orderId,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,

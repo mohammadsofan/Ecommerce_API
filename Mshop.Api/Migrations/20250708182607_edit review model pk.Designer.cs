@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mshop.Api.Data;
 
@@ -11,9 +12,11 @@ using Mshop.Api.Data;
 namespace Mshop.Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250708182607_edit review model pk")]
+    partial class editreviewmodelpk
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -471,7 +474,7 @@ namespace Mshop.Api.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("ResetPasswordCodes");
+                    b.ToTable("ResetPasswordCode");
                 });
 
             modelBuilder.Entity("Mshop.Api.Data.models.Review", b =>
@@ -485,9 +488,6 @@ namespace Mshop.Api.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
@@ -498,7 +498,7 @@ namespace Mshop.Api.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Review");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

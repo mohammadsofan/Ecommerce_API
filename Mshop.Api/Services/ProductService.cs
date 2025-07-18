@@ -171,5 +171,9 @@ namespace Mshop.Api.Services
             await context.SaveChangesAsync(cancellationToken);
             return true;
         }
+        public async Task SaveChangesAsync()
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }

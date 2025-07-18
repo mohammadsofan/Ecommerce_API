@@ -37,7 +37,7 @@ namespace Mshop.Api.Controllers
                 {
                     return NotFound();
                 }
-                var orders = await orderService.GetAsync(o => o.ApplicationUserId == userId,false);
+                var orders = await orderService.GetAsync(o => o.ApplicationUserId == userId,false,o=>o.OrderItems);
                 return Ok(new { orders = orders.Adapt<IEnumerable<OrderResponse>>()});
             }catch(Exception ex)
             {

@@ -13,6 +13,7 @@ namespace Mshop.Api.Services.IService
         Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
         Task<bool> EditAsync(Guid id, T entity, CancellationToken cancellationToken = default);
+        Task SaveChangesAsync();
 
     }
 }
