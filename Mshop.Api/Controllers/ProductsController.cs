@@ -74,6 +74,10 @@ namespace Mshop.Api.Controllers
             {
                 return BadRequest(ex.Message);
             }
+            catch(InvalidOperationException ex)
+            {
+                return NotFound(new {ex.Message});
+            }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
@@ -104,13 +108,17 @@ namespace Mshop.Api.Controllers
                 var result = await productService.EditAsync(id, productRequest.Adapt<Product>(), productRequest.MainImage,cancellationToken);
                 if (!result)
                 {
-                    return NotFound();
+                    return NotFound(new {Message = $"There is no product with id {id}"});
                 }
                 return NoContent();
             }
             catch (InvalidDataException ex)
             {
                 return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { ex.Message });
             }
             catch (Exception ex)
             {

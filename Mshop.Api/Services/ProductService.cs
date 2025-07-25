@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Mshop.Api.Data;
 using Mshop.Api.Data.models;
 using Mshop.Api.DTOs.Requests;
@@ -10,14 +12,33 @@ namespace Mshop.Api.Services
     public class ProductService : IProductService
     {
         private readonly ApplicationDbContext context;
+        private readonly ICategoryService categoryService;
+        private readonly IBrandService brandService;
+        private readonly IHttpContextAccessor httpContextAccessor;
 
-        public ProductService(ApplicationDbContext context)
+        public ProductService(ApplicationDbContext context,ICategoryService categoryService,IBrandService brandService,IHttpContextAccessor httpContextAccessor)
         {
             this.context = context;
+            this.categoryService = categoryService;
+            this.brandService = brandService;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Product> AddAsync(Product product, IFormFile file,CancellationToken cancellationToken = default)
         {
+            var category = await categoryService.GetOneAsync(c => c.Id == product.CategoryId, false);
+            if(category == null)
+            {
+                throw new InvalidOperationException($"Category with id {product.CategoryId} does not exist.");
+            }
+            if(product.BrandId.HasValue)
+            {
+                var brand = await brandService.GetOneAsync(b => b.Id == product.BrandId, false);
+                if(brand == null)
+                {
+                    throw new InvalidOperationException($"Brand with id {product.BrandId} does not exist.");
+                }
+            }
             if (file is null || file.Length <= 0)
             {
                 throw new InvalidDataException("Invalid File");
@@ -35,7 +56,7 @@ namespace Mshop.Api.Services
             {
                 await file.CopyToAsync(stream);
             }
-            product.MainImage = fileName;
+            product.MainImage = httpContextAccessor.HttpContext!.Request.Scheme + "://" + httpContextAccessor.HttpContext.Request.Host + "/images/" + fileName;
             product.Id = Guid.NewGuid();
             await context.Products.AddAsync(product, cancellationToken);
             await context.SaveChangesAsync();
@@ -49,7 +70,9 @@ namespace Mshop.Api.Services
             {
                 return false;
             }
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Images", product.MainImage);
+            var splits = product.MainImage.Split("/");
+            var fileName = splits[splits.Length - 1];
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Images",fileName);
             if (System.IO.File.Exists(filePath))
             {
                 System.IO.File.Delete(filePath);
@@ -66,8 +89,20 @@ namespace Mshop.Api.Services
             {
                 return false;
             }
-
-            if(file is not null && file.Length > 0)
+            var category = await categoryService.GetOneAsync(c => c.Id == product.CategoryId, false);
+            if (category == null)
+            {
+                throw new InvalidOperationException($"Category with id {product.CategoryId} does not exist.");
+            }
+            if (product.BrandId.HasValue)
+            {
+                var brand = await brandService.GetOneAsync(b => b.Id == product.BrandId, false);
+                if (brand == null)
+                {
+                    throw new InvalidOperationException($"Brand with id {product.BrandId} does not exist.");
+                }
+            }
+            if (file is not null && file.Length > 0)
             {
                 var extension = Path.GetExtension(file.FileName);
                 string[] allowedExtensions = { ".jpg", ".jpeg", ".png" };
@@ -75,7 +110,9 @@ namespace Mshop.Api.Services
                 {
                     throw new InvalidDataException("Invalid File Format");
                 }
-                var currentPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", productInDb.MainImage);
+                var splits = productInDb.MainImage.Split("/");
+                var currentFileName = splits[splits.Length - 1];
+                var currentPath = Path.Combine(Directory.GetCurrentDirectory(), "Images", currentFileName);
                 if (System.IO.File.Exists(currentPath))
                 {
                     System.IO.File.Delete(currentPath);
@@ -86,7 +123,7 @@ namespace Mshop.Api.Services
                 {
                    await file.CopyToAsync(stream);
                 }
-                product.MainImage = fileName;
+                product.MainImage = httpContextAccessor.HttpContext!.Request.Scheme + "://" + httpContextAccessor.HttpContext.Request.Host + "/images/" + fileName;
             }
             else
             {
